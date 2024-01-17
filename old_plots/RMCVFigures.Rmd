@@ -1,0 +1,173 @@
+---
+title: "Fly Food Figures"
+author: "Lexi Keene"
+date: "9/29/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+# read in data 
+df <- read_excel("Consolidated_fly_food_data.xlsx")
+
+# calculate mean and stdev of triplicates
+df_avg <- df %>% 
+  group_by(Experiment, Food, Setting, Food_Base) %>% 
+  summarize(triplicate_mean = mean(Flies), triplicate_sd = sd(Flies), .groups="drop")
+
+# calculate fly #s as fraction of total flies in expt
+df <- df %>%
+  group_by(Experiment, Setting, Food_Base, Replicate) %>% 
+  mutate(total_flies_in_expt = sum(Flies), 
+         fraction_flies_in_expt = Flies / total_flies_in_expt)
+```
+# first plot: HBE vs banana + yeast
+```{r}
+
+ggplot(filter(df, Experiment == 1 | Experiment == 2)) + 
+  geom_point(aes(x=Food, y=fraction_flies_in_expt, fill=Food), shape=21, size=2, color="black") +
+  geom_boxplot(aes(x=Food, y=fraction_flies_in_expt, fill=Food), shape=21, size=0.25, color="black", alpha=0.25) +
+  facet_wrap(~Setting) + 
+  theme_bw(base_size = 12) + 
+  xlab("") + 
+  ylab("Fraction of flies trapped")  +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(legend.position = "none") + 
+  ggtitle("How attractive is cornmeal food + homemade banana extract compared to \nbanana + yeast?")
+  {}
+
+ggsave("HBEvBananaYeast.pdf", units="in", width=10, height=7.5)
+```
+# second plot: all vs. all on cornmeal indoors & outdoors
+```{r}
+
+ggplot(filter(df, Experiment == 3 | Experiment == 4)) + 
+  geom_point(aes(x=Food, y=fraction_flies_in_expt, fill=Food), shape=21, size=2, color="black") +
+  geom_boxplot(aes(x=Food, y=fraction_flies_in_expt, fill=Food), shape=21, size=0.25, color="black", alpha=0.25) +
+  facet_wrap(~Setting) + 
+  theme_bw(base_size = 12) + 
+  xlab("") + 
+  ylab("Fraction of flies trapped")  +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(legend.position = "none") + 
+  ggtitle("How attractive is plain cornmeal food compared to five additives: homemade \nbanana extract, artificial banana extract, Morula oil and ethyl isovalerate?")
+  {}
+
+ggsave("CornmealAllIndoorOutdoor.pdf", units="in", width=10, height=7.5)
+```
+# thrid plot: all vs. all on potato indoors & outdoors
+```{r}
+
+ggplot(filter(df, Experiment == 5 | Experiment == 6)) + 
+  geom_point(aes(x=Food, y=fraction_flies_in_expt, fill=Food), shape=21, size=2, color="black") +
+  geom_boxplot(aes(x=Food, y=fraction_flies_in_expt, fill=Food), shape=21, size=0.25, color="black", alpha=0.25) +
+  facet_wrap(~Setting) + 
+  theme_bw(base_size = 12) + 
+  xlab("") + 
+  ylab("Fraction of flies trapped")  +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(legend.position = "none") + 
+  ggtitle("How attractive is plain potato food compared to five additives: homemade \nbanana extract, artificial banana extract, Morula oil and ethyl isovalerate")
+  {}
+ggsave("PotatoAllIndoorOutdoor.pdf", units="in", width=10, height=7.5)
+```
+
+# fourth plot: Ethyl Isovalerate Dilution
+```{r}
+library(forcats)
+df2 <- read_excel("EthylIsovalerateDil_Tidy.xlsx")
+
+ggplot(data=df2, aes(x=Food, y=Flies)) +
+  geom_col(fill = "skyblue4") +
+  geom_text(aes(label=Flies), vjust=-0.4, color="black", size=3.5) +  
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  scale_x_discrete(limits = c("Plain_cornmeal_food",	"Homemade_banana_extract",	"Artificial_banana_extract",	"2%_Ethyl_Isovalerate",	"1%_Ethyl_Isovalerate",	"0.5%_Ethyl_Isovalerate",	"0.25%_Ethyl_Isovalerate",	"0.125%_Ethyl_Isovalertate")) +
+  labs(title = "Does ethyl isovalerate concentration impact its attractiveness to \nD. melanogaster?", x="", y="Proportion of Flies Per Bottle")
+
+ggsave("EthylIsovalerateDil.pdf", units="in", width=10, height=7.5)
+```
+
+
+# calculate mean and stdev of triplicates
+#df_avg <- df %>% 
+#  group_by(Experiment, Food, Setting, Food_Base) %>% 
+#  summarize(triplicate_mean = mean(Flies), triplicate_sd = sd(Flies), .groups="drop")
+
+# calculate fly #s as fraction of total flies in expt
+df <- df %>%
+  group_by(Experiment, Setting, Food_Base) %>% 
+  mutate(total_flies_in_expt = sum(Flies), 
+         fraction_flies_in_expt = Flies / total_flies_in_expt) %>% 
+  mutate(Food = str_replace(Food, "Plain_cornmeal_food", "Standard"),
+         Food = str_replace(Food, "Banana_and_Yeast", "Banana & Yeast"),
+         Food = str_replace(Food, "Homemade_banana_extract", "Homemade Banana Extract"),
+         Food = str_replace(Food, "Artificial_banana_extract", "Commercial Banana Extract"),
+         Food = str_replace(Food, "Ethyl_Isovalerate", "Ethyl Isovalerate"),
+         Food = str_replace(Food, "Morula_fruit_oil", "Morula Oil")) %>% 
+  mutate(percentage = (Flies/total_flies_in_expt)*100)
+
+
+# first plot: HBE vs banana + yeast
+ggplot(filter(df, Experiment == 1 | Experiment == 2)) + 
+  geom_point(aes(x=Food, y=percentage, fill=Food), shape=21, size=2, color="black") +
+  geom_boxplot(aes(x=Food, y=percentage, fill=Food), shape=21, size=0.25, color="black", alpha=0.25) +
+  facet_wrap(~Setting) + 
+  theme_few(base_size = 11) +
+  theme_minimal(base_size = 11) +
+  xlab("") + 
+  ylab("Percentage of flies trapped")  +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(panel.border = element_rect(linetype = "solid", fill = NA),
+        strip.background = element_rect(colour = "black", fill = "white"),
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"),
+        strip.text = element_text(face = "bold"),
+        axis.text = element_text(face = "bold")) +
+  ggtitle("How attractive is cornmeal based food with homemade banana extract compared to banana and yeast?")
+  {}
+
+ggsave("plot_1.pdf", units="in", width=10, height=7.5)
+
+# second plot: all vs. all on cornmeal indoors & outdoors
+ggplot(filter(df, Experiment == 3 | Experiment == 4)) + 
+  geom_point(aes(x=Food, y=percentage, fill=Food), shape=21, size=2, color="black") +
+  geom_boxplot(aes(x=Food, y=percentage, fill=Food), shape=21, size=0.25, color="black", alpha=0.25) +
+  facet_wrap(~Setting) + 
+  theme_few(base_size = 11) +
+  theme_minimal(base_size = 11) +
+  xlab("") + 
+  ylab("Percentage of flies trapped")  +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(panel.border = element_rect(linetype = "solid", fill = NA),
+        strip.background = element_rect(colour = "black", fill = "white"),
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"),
+        strip.text = element_text(face = "bold"),
+        axis.text = element_text(face = "bold")) +
+  ggtitle("How does fly food attractant impact fly trap success in cornmeal based food?")
+  {}
+
+ggsave("plot_2.pdf", units="in", width=10, height=7.5)
+
+# thrid plot: all vs. all on potato indoors & outdoors
+ggplot(filter(df, Experiment == 5 | Experiment == 6)) + 
+  geom_point(aes(x=Food, y=percentage, fill=Food), shape=21, size=2, color="black") +
+  geom_boxplot(aes(x=Food, y=percentage, fill=Food), shape=21, size=0.25, color="black", alpha=0.25) +
+  facet_wrap(~Setting) + 
+  theme_few(base_size = 11) +
+  theme_minimal(base_size = 11) + 
+  xlab("") + 
+  ylab("Percentage of flies trapped")  +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  theme(panel.border = element_rect(linetype = "solid", fill = NA),
+        strip.background = element_rect(colour = "black", fill = "white"),
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"),
+        strip.text = element_text(face = "bold"),
+        axis.text = element_text(face = "bold")) +
+  ggtitle("How does fly food attractant impact fly trap success in potato based food?")
+  {}
+
+ggsave("plot_3.pdf", units="in", width=10, height=7.5)
